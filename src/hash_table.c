@@ -61,6 +61,8 @@ static int ht_get_hash( const char *s, const int num_buckets, const int attempt 
 }
 ///folosim double hash pt eficienta si evitarea coliziunilor
 
+
+static ht_item HT_DELETED_ITEM = { NULL, NULL };
 void ht_insert( ht_hash_table *ht, const char* key, const char *value )
 {
     ht_item* item = ht_new_item( key, value );
@@ -69,6 +71,15 @@ void ht_insert( ht_hash_table *ht, const char* key, const char *value )
     int i = 1;
     while( curr_item != NULL )
     {
+        if( curr_item != &HT_DELETED_ITEM )
+        {
+            if( strcmp != &HT_DELETED_ITEM )
+            {
+                ht_del_item(curr_item);
+                ht->items[ index ] = item;
+                return;
+            }
+        }
         index = ht_get_hash( item->key, ht->size, i );
         curr_item = ht->items[ index ];
         i++;
@@ -84,16 +95,18 @@ char *ht_search(ht_hash_table *ht, const char* key )
     int i = 1;
     while( item != NULL )
     {
-        if(strcmp( item->key, key ) == 0 )
-            return item->value;
-        index = ht_get_hash( key, ht->size, i );
-        item = ht->items[ index ];
-        i++;
+        if( item != &HT_DELETED_ITEM)
+        {
+            if(strcmp( item->key, key ) == 0 )
+                return item->value;
+            index = ht_get_hash( key, ht->size, i );
+            item = ht->items[ index ];
+            i++;
+        }
     }
     return NULL;
 }
 
-static ht_item HT_DELETED_ITEM = { NULL, NULL };
 
 void ht_delete( ht_hash_table *ht, const char* key )
 {
