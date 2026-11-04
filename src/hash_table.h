@@ -1,3 +1,6 @@
+#define HT_PRIME_1 151
+#define HT_PRIME_2 163
+
 typedef struct{
     char *key;
     char *value;
