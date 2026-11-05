@@ -4,6 +4,7 @@
 
 #include "hash_table.h"
 #include "prime.h"
+static ht_item HT_DELETED_ITEM = { NULL, NULL };
 
 static void *xmalloc( size_t size )
 {
@@ -35,14 +36,20 @@ static ht_item *ht_new_item( const char *k, const char *v)
     return i;
 }
 
+static void ht_del_item( ht_item *i )
+{
+    free(i->key);
+    free(i->value);
+    free(i);
+}
+
 static ht_hash_table *ht_new_sized( const int base_size )
 {
     ht_hash_table *ht = xmalloc( sizeof( ht_hash_table ));
     ht->base_size = base_size;
-
     ht->size = next_prime( ht->base_size );
-
     ht->count = 0;
+    ht->tombstone_count = 0;
     ht->items = xcalloc( (size_t)ht->size, sizeof( ht_item*));
     return ht;
 }
@@ -78,6 +85,7 @@ static void ht_resize( ht_hash_table *ht, const int base_size )
 
     ht->base_size = new_ht->base_size;
     ht->count = new_ht->count;
+    ht->tombstone_count = new_ht->tombstone_count;
 
     const int tmp_size = ht->size;
     ht->size = new_ht->size;
@@ -102,12 +110,6 @@ static void ht_resize_down( ht_hash_table *ht )
     ht_resize( ht, new_size );
 }
 
-static void ht_del_item( ht_item *i )
-{
-    free(i->key);
-    free(i->value);
-    free(i);
-}
 
 
 static int ht_hash( const char *s, const int a, const int m)
@@ -129,10 +131,9 @@ static int ht_get_hash( const char *s, const int num_buckets, const int attempt 
 ///folosim double hash pt eficienta si evitarea coliziunilor
 
 
-static ht_item HT_DELETED_ITEM = { NULL, NULL };
 void ht_insert( ht_hash_table *ht, const char* key, const char *value )
 {
-    const int load = ht->count * 100 / ht->size;
+    const int load = (ht->count + ht->tombstone_count ) * 100 / ht->size;
     if( load > 70 )
         ht_resize_up(ht);
 
@@ -162,7 +163,10 @@ void ht_insert( ht_hash_table *ht, const char* key, const char *value )
 
 
     if( ftombstone != -1 )
+    {
         ht->items[ ftombstone ] = item;
+        ht->tombstone_count--;
+    }
     else
         ht->items[ index ] = item;
 
@@ -191,10 +195,6 @@ char *ht_search(ht_hash_table *ht, const char* key )
 
 void ht_delete( ht_hash_table *ht, const char* key )
 {
-    const int load = ht->count * 100 / ht->size;
-    if( load < 10 )
-        ht_resize_down(ht);
-
     int index = ht_get_hash( key, ht->size, 0 );
     ht_item *item = ht->items[ index ];
     int i = 1;
@@ -207,6 +207,12 @@ void ht_delete( ht_hash_table *ht, const char* key )
                 ht_del_item(item);
                 ht->items[index] = &HT_DELETED_ITEM;
                 ht->count--;
+                ht->tombstone_count++;
+
+                const int load = ht->count * 100 / ht->size;
+                if( load < 10 )
+                    ht_resize_down(ht);
+
                 return;
             }
         }
@@ -214,4 +220,18 @@ void ht_delete( ht_hash_table *ht, const char* key )
         item = ht->items[ index ];
         i++;
     }
+}
+
+void ht_print(ht_hash_table *ht)
+{
+    printf("--- Conținut Hash Table ---\n");
+    for (int i = 0; i < ht->size; i++)
+    {
+        ht_item *item = ht->items[i];
+        if (item != NULL && item != &HT_DELETED_ITEM)
+        {
+            printf("%s : %s\n", item->key, item->value);
+        }
+    }
+    printf("---------------------------");
 }
