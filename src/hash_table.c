@@ -21,6 +21,47 @@ ht_hash_table *ht_new()
     return ht;
 }
 
+static ht_hash_table *ht_new_sized( const int base_size )
+{
+    ht_hash_table *ht = xmalloc( sizeof( ht_hash_table ));
+    ht->base_size = base_size;
+
+    ht->size = next_prime( ht->base_size );
+
+    ht->count = 0;
+    ht->items = xcalloc( (size_t)ht->size, sizeof( ht_item*));
+    return ht;
+}
+
+ht_hash_table *ht_new()
+{
+    return ht_new_sized(HT_INITIAL_BASE_SIZE);
+}
+
+static void ht_resize( ht_hash_table *ht, const int base_size )
+{
+    if( base_size < HT_INITIAL_BASE_SIZE )
+        return;
+    ht_hash_table *new_ht = ht_new_sized(base_size );
+    for( int i = 0; i < ht->size; i++ )
+    {
+        ht_item *item = ht->items[ i ];
+        if( item != NULL && item != &HT_DELETED_ITEM )
+            ht_insert(new_ht, item->key, item->value );
+    }
+
+    ht->base_size = new_ht->base_size;
+    ht->count = new_ht->count;
+
+    const int tmp_size = ht->size;
+    ht->size = new_ht->size;
+    new_ht->size = tmp_size;
+
+    ht_item** tmp_items = ht->items;
+    ht->items = new_ht->items;
+    new_ht->items = tmp_items;
+}
+
 static void ht_del_item( ht_item *i )
 {
     free(i->key);
