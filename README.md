@@ -7,7 +7,6 @@ A high-performance Hash Table implementation in C using **Open Addressing** with
 - **Double Hashing**: Uses two distinct hash algorithms to minimize collisions during probing.
 - **Dynamic Resizing**: Automatically handles resizing (up and down) based on low/high load factor thresholds to optimize memory and operations ($O(1)$ average time complexity).
 - **Tombstone Deletion**: Safe key deletion (`&HT_DELETED_ITEM`) ensuring open addressing search chains remain unbroken.
-- **Robust Memory Management**: Built-in wrappers (`xmalloc`, `ht_del_item`) to prevent memory leaks and handle cleanup safely.
 - **Automated Build System**: Easy compilation and management via `Makefile`.
 
 ## Project Structure
