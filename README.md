@@ -14,13 +14,12 @@ A high-performance Hash Table implementation in C using **Open Addressing** with
 ```text
 .
 ├── Makefile          # Build instructions
-├── .gitignore        # Git ignore patterns (build artifacts, OS files)
 └── src/
     ├── hash_table.h  # Public interface and data structures
     ├── hash_table.c  # Core hash table operations & rehash logic
     ├── prime.h       # Utility declarations for prime calculations
     ├── prime.c       # Functions to compute prime sizes for resizing
-    └── main.c        # Integration and verification test suite
+    └── main.c        # Integration and verification tests
 ```
 **Requirements:**
 gcc compiler
